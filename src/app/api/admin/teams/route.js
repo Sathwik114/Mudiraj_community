@@ -16,8 +16,9 @@ export async function GET(request) {
   const constitutionId = searchParams.get('constitutionId') || '';
   const mandalId = searchParams.get('mandalId') || '';
   const search = searchParams.get('search') || '';
+  const exact = searchParams.get('exact') === 'true';
 
-  if (orgLevel && orgId) {
+  if (orgId) {
     teamService.ensureTeamsExist({ orgLevel, orgId });
   }
 
@@ -29,6 +30,7 @@ export async function GET(request) {
     constitutionId,
     mandalId,
     search,
+    exact,
   });
 
   return NextResponse.json({ teams });

@@ -3,6 +3,7 @@ import path from 'path';
 import crypto from 'crypto';
 import { hashPassword } from './auth.js';
 import { VALID_TEAM_TYPES } from './validation.js';
+import { ANDHRA_PRADESH_DATA } from './andhraPradeshData.js';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DB_FILE_PATH = path.join(DATA_DIR, 'mudiraj_db.json');
@@ -61,26 +62,80 @@ function createInitialSeedDatabase() {
     { id: 'level-3', name: 'Constituency', levelRank: 3, status: 'Active', createdAt: now },
     { id: 'level-4', name: 'Mandal', levelRank: 4, status: 'Active', createdAt: now },
     { id: 'level-5', name: 'Gramam', levelRank: 5, status: 'Active', createdAt: now },
+    { id: 'level-nri', name: 'NRI', levelRank: 0, status: 'Active', createdAt: now },
   ];
 
   // 2. Team Master (org_units)
+  const customOverrides = {
+    'unit-dist-ntr': 'unit-ntr',
+    'unit-dist-kurnool': 'unit-knl',
+    'unit-dist-nellore': 'unit-nlr',
+    'unit-const-vijayawada-central': 'unit-vjacen',
+    'unit-const-gudur': 'unit-gudur',
+  };
+
   const orgUnits = [
     // State
     { id: 'unit-ap', orgLevelId: 'level-1', parentId: null, name: 'Andhra Pradesh', code: 'AP', status: 'Active', createdAt: now },
-    
-    // Districts
-    { id: 'unit-ntr', orgLevelId: 'level-2', parentId: 'unit-ap', name: 'NTR', code: 'NTR', status: 'Active', createdAt: now },
-    { id: 'unit-knl', orgLevelId: 'level-2', parentId: 'unit-ap', name: 'Kurnool', code: 'KNL', status: 'Active', createdAt: now },
-    { id: 'unit-nlr', orgLevelId: 'level-2', parentId: 'unit-ap', name: 'Nellore', code: 'NLR', status: 'Active', createdAt: now },
-    
-    // Constituencies
-    { id: 'unit-vjacen', orgLevelId: 'level-3', parentId: 'unit-ntr', name: 'Vijayawada Central', code: 'AC-080', status: 'Active', createdAt: now },
-    { id: 'unit-gudur', orgLevelId: 'level-3', parentId: 'unit-nlr', name: 'Gudur', code: 'AC-119', status: 'Active', createdAt: now },
-    
-    // Mandals
-    { id: 'unit-vjaurban', orgLevelId: 'level-4', parentId: 'unit-vjacen', name: 'Vijayawada Urban Mandal', code: 'MND-004', status: 'Active', createdAt: now },
-    { id: 'unit-naidupeta', orgLevelId: 'level-4', parentId: 'unit-gudur', name: 'Naidupeta Mandal', code: 'MND-120', status: 'Active', createdAt: now },
   ];
+
+  ANDHRA_PRADESH_DATA.districts.forEach((dist) => {
+    const distId = customOverrides[dist.id] || dist.id;
+    orgUnits.push({
+      id: distId,
+      orgLevelId: 'level-2',
+      parentId: 'unit-ap',
+      name: dist.name,
+      code: dist.code,
+      status: 'Active',
+      createdAt: now,
+    });
+
+    dist.constituencies.forEach((ac) => {
+      const acId = customOverrides[ac.id] || ac.id;
+      orgUnits.push({
+        id: acId,
+        orgLevelId: 'level-3',
+        parentId: distId,
+        name: ac.name,
+        code: ac.code,
+        status: 'Active',
+        createdAt: now,
+      });
+
+      ac.mandals.forEach((mandal) => {
+        const mandalCleanName = mandal.endsWith('Mandal') ? mandal : `${mandal} Mandal`;
+        const mKey = mandal.replace(/ Mandal$/i, '').trim();
+        const mandalId =
+          mKey === 'Vijayawada Urban'
+            ? 'unit-vjaurban'
+            : mKey === 'Naidupeta'
+            ? 'unit-naidupeta'
+            : `unit-mnd-${ac.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${mKey.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+
+        orgUnits.push({
+          id: mandalId,
+          orgLevelId: 'level-4',
+          parentId: acId,
+          name: mandalCleanName,
+          code: `MND-${mKey.slice(0, 8).toUpperCase().replace(/[^A-Z0-9]/g, '')}`,
+          status: 'Active',
+          createdAt: now,
+        });
+      });
+    });
+  });
+
+  // NRI Global Central Wing
+  orgUnits.push({
+    id: 'unit-nri',
+    orgLevelId: 'level-nri',
+    parentId: null,
+    name: 'NRI Global Central Wing',
+    code: 'NRI-GLB',
+    status: 'Active',
+    createdAt: now,
+  });
 
   // 3. Teams
   const teams = [];

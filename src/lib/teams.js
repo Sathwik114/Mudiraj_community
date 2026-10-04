@@ -91,6 +91,7 @@ export function queryTeams({
   teamType = '',
   search = '',
   includeNri = false,
+  exact = false,
 } = {}) {
   const db = getDatabase();
   let filtered = db.teams;
@@ -102,13 +103,17 @@ export function queryTeams({
 
   const targetUnitId = orgUnitId || orgId;
   if (targetUnitId) {
-    const unit = db.orgUnits.find((u) => u.id === targetUnitId);
-    if (unit) {
-      const matchingUnits = db.orgUnits.filter((u) =>
-        getHierarchyPath(u.id).some((p) => p.id === targetUnitId)
-      );
-      const validUnitIds = new Set(matchingUnits.map((u) => u.id));
-      filtered = filtered.filter((t) => validUnitIds.has(t.orgUnitId));
+    if (exact) {
+      filtered = filtered.filter((t) => t.orgUnitId === targetUnitId);
+    } else {
+      const unit = db.orgUnits.find((u) => u.id === targetUnitId);
+      if (unit) {
+        const matchingUnits = db.orgUnits.filter((u) =>
+          getHierarchyPath(u.id).some((p) => p.id === targetUnitId)
+        );
+        const validUnitIds = new Set(matchingUnits.map((u) => u.id));
+        filtered = filtered.filter((t) => validUnitIds.has(t.orgUnitId));
+      }
     }
   }
 
@@ -151,12 +156,13 @@ export function queryTeams({
 /**
  * Ensures all 3 teams (Main, Youth, Ladies) exist for a given organization unit.
  */
-export function ensureTeamsForOrganization({ orgUnitId }) {
+export function ensureTeamsForOrganization({ orgUnitId, orgId } = {}) {
+  const targetId = orgUnitId || orgId;
   const db = getDatabase();
-  const unit = db.orgUnits.find(u => u.id === orgUnitId);
-  if (!unit) throw new Error(`Organization unit not found (${orgUnitId})`);
+  const unit = db.orgUnits.find(u => u.id === targetId);
+  if (!unit) throw new Error(`Organization unit not found (${targetId})`);
 
-  const existing = db.teams.filter((t) => t.orgUnitId === orgUnitId);
+  const existing = db.teams.filter((t) => t.orgUnitId === targetId);
   if (existing.length === 3) {
     return existing.map((t) => enrichTeamDetails(t, db));
   }
@@ -168,7 +174,7 @@ export function ensureTeamsForOrganization({ orgUnitId }) {
 
   defaults.forEach((defTeam) => {
     const already = db.teams.some(
-      (t) => t.orgUnitId === orgUnitId && t.teamType === defTeam.teamType
+      (t) => t.orgUnitId === targetId && t.teamType === defTeam.teamType
     );
     if (!already) {
       db.teams.push(defTeam);
@@ -177,7 +183,7 @@ export function ensureTeamsForOrganization({ orgUnitId }) {
 
   saveDatabase(db);
   return db.teams
-    .filter((t) => t.orgUnitId === orgUnitId)
+    .filter((t) => t.orgUnitId === targetId)
     .map((t) => enrichTeamDetails(t, db));
 }
 
@@ -394,6 +400,9 @@ export function queryAllLeaders({
   orgLevel = '',
   teamType = '',
   positionCode = '',
+  districtId = '',
+  constitutionId = '',
+  mandalId = '',
 } = {}) {
   const db = getDatabase();
 
@@ -439,12 +448,16 @@ export function queryAllLeaders({
     })
     .filter(Boolean);
 
+  const targetFilterUnitId = mandalId || constitutionId || districtId || orgUnitId;
+
   return results.filter((item) => {
     if (teamType && item.teamType !== teamType) return false;
     if (positionCode && item.positionCode !== positionCode) return false;
     if (orgLevel && item.orgLevel.toLowerCase() !== orgLevel.toLowerCase()) return false;
-    if (orgUnitId) {
-      if (!item.hierarchyPath.some((p) => p.id === orgUnitId)) return false;
+    if (targetFilterUnitId) {
+      if (!item.hierarchyPath.some((p) => p.id === targetFilterUnitId) && item.orgUnitId !== targetFilterUnitId) {
+        return false;
+      }
     }
 
     if (search && search.trim()) {

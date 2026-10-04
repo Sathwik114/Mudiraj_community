@@ -18,15 +18,41 @@ export const organizationService = {
     const raw = getAllOrganizationHierarchy({ includeInactive });
     const db = getDatabase();
 
+    const unitMap = new Map();
+    db.orgUnits.forEach((u) => unitMap.set(u.id, u));
+
+    const childrenCountMap = new Map();
+    db.orgUnits.forEach((u) => {
+      if (u.parentId) {
+        childrenCountMap.set(u.parentId, (childrenCountMap.get(u.parentId) || 0) + 1);
+      }
+    });
+
+    const activeMembersCountMap = new Map();
+    db.members.forEach((m) => {
+      if (m.orgUnitId && ['Active', 'Approved'].includes(m.status)) {
+        activeMembersCountMap.set(m.orgUnitId, (activeMembersCountMap.get(m.orgUnitId) || 0) + 1);
+      }
+    });
+
     // Attach counts and hierarchy path to each org unit
     const enrichedUnits = raw.orgUnits.map((u) => {
-      const childrenCount = db.orgUnits.filter((child) => child.parentId === u.id).length;
-      const membersCount = db.members.filter(
-        (m) => m.orgUnitId === u.id && ['Active', 'Approved'].includes(m.status)
-      ).length;
+      const childrenCount = childrenCountMap.get(u.id) || 0;
+      const membersCount = activeMembersCountMap.get(u.id) || 0;
       
-      const path = getHierarchyPath(u.id);
-      const parentName = u.parentId ? db.orgUnits.find(p => p.id === u.parentId)?.name : null;
+      const path = [];
+      let currentId = u.id;
+      while (currentId) {
+        const current = unitMap.get(currentId);
+        if (current) {
+          path.unshift(current);
+          currentId = current.parentId;
+        } else {
+          break;
+        }
+      }
+
+      const parentName = u.parentId ? unitMap.get(u.parentId)?.name : null;
 
       return {
         ...u,
@@ -38,9 +64,20 @@ export const organizationService = {
       };
     });
 
+    const stateLevel = raw.orgLevels.find(l => l.levelRank === 1 || l.name === 'State');
+    const districtLevel = raw.orgLevels.find(l => l.levelRank === 2 || l.name === 'District');
+    const constLevel = raw.orgLevels.find(l => l.levelRank === 3 || l.name === 'Constituency');
+    const mandalLevel = raw.orgLevels.find(l => l.levelRank === 4 || l.name === 'Mandal');
+    const gramamLevel = raw.orgLevels.find(l => l.levelRank === 5 || l.name === 'Gramam');
+
     return {
       orgLevels: raw.orgLevels,
       orgUnits: enrichedUnits,
+      states: enrichedUnits.filter(u => u.orgLevelId === stateLevel?.id),
+      districts: enrichedUnits.filter(u => u.orgLevelId === districtLevel?.id),
+      constitutions: enrichedUnits.filter(u => u.orgLevelId === constLevel?.id),
+      mandals: enrichedUnits.filter(u => u.orgLevelId === mandalLevel?.id),
+      gramams: enrichedUnits.filter(u => u.orgLevelId === gramamLevel?.id),
     };
   },
 

@@ -23,6 +23,7 @@ function AdminTeamsContent() {
   const [teamType, setTeamType] = useState('');
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(24);
 
   useEffect(() => {
     fetch('/api/admin/organizations')
@@ -36,6 +37,7 @@ function AdminTeamsContent() {
 
   const loadTeams = useCallback(async () => {
     setLoading(true);
+    setVisibleCount(24);
     try {
       const params = new URLSearchParams();
       if (orgLevel) params.set('orgLevel', orgLevel);
@@ -139,10 +141,10 @@ function AdminTeamsContent() {
               value={orgId}
               onChange={(e) => setOrgId(e.target.value)}
             >
-              <option value="">All {orgLevel || 'Organization'} Units</option>
+              <option value="">All {orgLevel || 'Organization'} Units ({unitsForLevel?.length || 0})</option>
               {(unitsForLevel || []).map((u) => (
                 <option key={u.id} value={u.id}>
-                  {u.name} ({u.code})
+                  {u.name} ({u.code}){u.parentName ? ` — [${u.parentName}]` : ''}
                 </option>
               ))}
             </select>
@@ -176,7 +178,10 @@ function AdminTeamsContent() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {teams.slice(0, 15).map((team) => (
+          <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+            Showing {Math.min(teams.length, visibleCount)} of {teams.length} teams
+          </div>
+          {teams.slice(0, visibleCount).map((team) => (
             <TeamCard
               key={team.id}
               team={team}
@@ -184,6 +189,18 @@ function AdminTeamsContent() {
               onTeamUpdated={() => loadTeams()}
             />
           ))}
+          {teams.length > visibleCount && (
+            <div style={{ textAlign: 'center', marginTop: '10px' }}>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => setVisibleCount((prev) => prev + 24)}
+                style={{ padding: '10px 24px', fontWeight: 700 }}
+              >
+                Load More Teams ({teams.length - visibleCount} more)
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

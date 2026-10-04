@@ -37,9 +37,30 @@ export async function POST(request) {
   }
 
   try {
-    const { teamId, memberId, positionCode } = await request.json();
+    const { teamId, orgUnitId, teamType, memberId, positionCode } = await request.json();
+    let targetTeamId = teamId;
+
+    if (!targetTeamId && orgUnitId && teamType) {
+      const teams = teamService.getTeams({ orgId: orgUnitId, exact: true, includeNri: true });
+      const found = teams.find((t) => t.teamType === teamType);
+      if (found) {
+        targetTeamId = found.id;
+      } else {
+        const ensured = teamService.ensureTeamsExist({ orgId: orgUnitId });
+        const created = (ensured || []).find((t) => t.teamType === teamType);
+        targetTeamId = created?.id;
+      }
+    }
+
+    if (!targetTeamId) {
+      return NextResponse.json(
+        { error: 'Please select a valid organizational level, target area, and team category.' },
+        { status: 400 }
+      );
+    }
+
     const updatedTeam = teamService.assignLeader({
-      teamId,
+      teamId: targetTeamId,
       memberId,
       positionCode,
       actor: admin.username,

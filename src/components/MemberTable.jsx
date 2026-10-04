@@ -66,13 +66,18 @@ export default function MemberTable({
   const [rejectRemarks, setRejectRemarks] = useState('');
 
   const availableConstitutions = districtId
-    ? allConstitutions.filter((c) => c.districtId === districtId)
+    ? allConstitutions.filter((c) => c.districtId === districtId || c.parentId === districtId)
     : allConstitutions;
 
   const availableMandals = constitutionId
-    ? allMandals.filter((m) => m.constitutionId === constitutionId)
+    ? allMandals.filter((m) => m.constitutionId === constitutionId || m.parentId === constitutionId)
     : districtId
-    ? allMandals.filter((m) => m.districtId === districtId)
+    ? allMandals.filter((m) => {
+        if (m.districtId === districtId) return true;
+        // If m.parentId is a constitution in the selected district
+        const parentConst = allConstitutions.find((c) => c.id === m.parentId);
+        return parentConst?.parentId === districtId || parentConst?.districtId === districtId;
+      })
     : allMandals;
 
   const fetchMembers = useCallback(
