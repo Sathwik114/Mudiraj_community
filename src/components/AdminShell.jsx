@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Sidebar from '@/components/Sidebar';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Download, FileDown, Presentation } from 'lucide-react';
 import mudirajLogo from '@/Public/mudiraj_logo.png';
 
 export default function AdminShell({ admin, children }) {
@@ -47,7 +47,42 @@ export default function AdminShell({ admin, children }) {
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', flexWrap: 'wrap' }}>
+            {/* Download Admin Features PPT Button in Navbar */}
+            <a
+              href="/downloads/Mudiraj_Admin_Features_Guide.pptx"
+              download="Mudiraj_Admin_Features_Guide.pptx"
+              className="btn btn-sm"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                backgroundColor: '#ffffff',
+                color: 'var(--primary)',
+                border: '1.5px solid #bfdbfe',
+                borderRadius: '6px',
+                fontWeight: 700,
+                fontSize: '12px',
+                padding: '6px 12px',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                textDecoration: 'none',
+                transition: 'all 0.15s',
+                whiteSpace: 'nowrap'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#eff6ff';
+                e.currentTarget.style.borderColor = 'var(--primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#ffffff';
+                e.currentTarget.style.borderColor = '#bfdbfe';
+              }}
+              title="Download Admin Features Guide Presentation (.pptx covering all admin modules)"
+            >
+              <Download size={14} color="var(--accent)" />
+              <span>Download Admin Guide (PPT)</span>
+            </a>
+
             <span className="badge badge-active hide-on-mobile">State: Andhra Pradesh</span>
           </div>
         </header>

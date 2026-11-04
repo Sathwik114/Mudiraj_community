@@ -14,6 +14,8 @@ import {
   Award,
   ArrowRight,
   Activity,
+  Download,
+  FileDown,
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -131,6 +133,22 @@ export default function AdminDashboardPage() {
         </div>
 
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <a
+            href="/downloads/Mudiraj_Admin_Features_Guide.pptx"
+            download="Mudiraj_Admin_Features_Guide.pptx"
+            className="btn btn-outline"
+            style={{
+              background: '#ffffff',
+              borderColor: '#93c5fd',
+              color: '#1e40af',
+              fontWeight: 600,
+              textDecoration: 'none',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+            }}
+            title="Download Full Admin Features Guide Presentation (.pptx)"
+          >
+            <Download size={16} color="#d97706" /> Download Admin Guide (PPT)
+          </a>
           <Link href="/admin/applications" className="btn btn-accent">
             Review Pending Applications ({s.pendingApplications})
           </Link>

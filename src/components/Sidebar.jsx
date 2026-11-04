@@ -14,6 +14,7 @@ import {
   LogOut,
   Globe,
   Plane,
+  FileDown,
 } from 'lucide-react';
 import mudirajLogo from '@/Public/mudiraj_logo.png';
 
@@ -94,6 +95,16 @@ export default function Sidebar({ admin, isOpen, onClose }) {
         })}
 
         <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <a
+            href="/downloads/Mudiraj_Admin_Features_Guide.pptx"
+            download="Mudiraj_Admin_Features_Guide.pptx"
+            className="admin-nav-item"
+            style={{ color: '#fbbf24', textDecoration: 'none' }}
+            title="Download Admin Features Guide Presentation (.pptx)"
+          >
+            <FileDown size={18} />
+            <span>Admin Guide (PPT)</span>
+          </a>
           <Link href="/" onClick={handleLinkClick} className="admin-nav-item">
             <Globe size={18} />
             <span>Public Website</span>
